@@ -30,4 +30,9 @@ the passed in function over them.
     |> Enum.map(fun)
   end
 
+  @doc """
+takes the passed in string, downcases it, and turns it into an atom
+  """
+  def to_downcased_atom(s), do: s |> String.downcase |> String.to_atom
+
 end

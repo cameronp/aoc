@@ -13,7 +13,7 @@ defmodule Two do
 
   def title, do: ""
 
-  def module, do: Two.Solver
+  def module, do: Two.Bathroom
 
   def part1, do: module |> apply(:part1, [])
   def part2, do: module |> apply(:part2, [])
