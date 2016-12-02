@@ -1,5 +1,5 @@
 defmodule BathroomTest do
-  use ExUnit.Base
+  use ExUnit.Case
   doctest Two.Bathroom
   import Two.Bathroom
   alias Two.Bathroom.State
