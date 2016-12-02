@@ -11,7 +11,7 @@ defmodule Two do
 
   def day, do: 2
 
-  def title, do: ""
+  def title, do: "Bathroom Security"
 
   def module, do: Two.Bathroom
 
