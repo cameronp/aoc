@@ -20,7 +20,7 @@ Turns the state in the specified direction (:l or :r)
 
     @doc """
 Walks forward the specified distance, calling the passed in abort_fun after 
-ever step to determine if it's time to bail.
+every step to determine if it's time to bail.
     """
     def careful_walk(%State{} = s, 0, _abort_fun), do: s
     def careful_walk(%State{} = s, distance, abort_fun) do
