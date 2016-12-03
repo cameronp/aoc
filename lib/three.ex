@@ -8,12 +8,11 @@ defmodule Three do
     IO.puts ""
   end
 
-
   def day, do: 3
 
   def title, do: "Squares With Three Sides"
 
-  def module, do: Three.Solver
+  def module, do: Three.Triangle
 
   def part1, do: module |> apply(:part1, [])
   def part2, do: module |> apply(:part2, [])

@@ -1,4 +1,4 @@
-defmodule Three.Triangle do
+defmodule Three.Solver do
   import Utils.Parsing 
 
   def part1, do: solve(&parse1/1)
