@@ -15,8 +15,10 @@ Takes a path, returns a binary.  Easier for pipelining.
 Optimistically parse an integer
 """
   def to_int(s) do
-    {i, ""} = Integer.parse(s) 
-    i
+    case Integer.parse(s) do
+      {i, ""} -> i
+      error -> IO.inspect(s)
+    end
   end
 
   @doc """
@@ -26,7 +28,7 @@ the passed in function over them.
   def split_and_map(s, delimiter, fun) do
     s
     |> String.split(delimiter, trim: true)
-    |> Enum.map(&String.rstrip/1)
+    |> Enum.map(&String.strip/1)
     |> Enum.map(fun)
   end
 
