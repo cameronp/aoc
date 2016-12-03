@@ -1,16 +1,12 @@
 defmodule Three.Solver do
   import Utils.Parsing 
 
-  def part1 do
-    load
-    |> parse
-    |> Enum.filter(&valid?/1)
-    |> Enum.count
-  end
+  def part1, do: solve(&parse1/1)
+  def part2, do: solve(&parse2/1)
 
-  def part2 do
+  def solve(parser) do
     load
-    |> parse2
+    |> parser.()
     |> Enum.filter(&valid?/1)
     |> Enum.count
   end
@@ -20,31 +16,12 @@ defmodule Three.Solver do
     |> readfile
   end
 
-  def ed do
-    load
-    |> String.split
-    |> Enum.filter(&(&1 != ""))
-    |> Enum.map(&String.to_integer/1)
-    |> Enum.with_index
-    |> Enum.group_by(fn {side, index} -> rem(index, 3) end)
-    #|> Map.values
-    #|> Enum.map(&only_values/1)
-    #|> List.flatten
-    #|> Enum.chunk(3)
-    #|> Enum.map(&List.to_tuple/1)
-  end
-  def parse(binary) do
+  def parse1(binary) do
     binary    
     |> split_and_map("\n", &parse_triangle/1)
-    |> Enum.map(&Enum.sort/1)
   end
 
-  def parse2(binary) do
-    binary
-    |> split_and_map("\n", &parse_triangle/1)
-    |> find_vertical_tris
-    |> Enum.map(&Enum.sort/1)
-  end
+  def parse2(binary), do: binary |> parse1 |> find_vertical_tris
 
   def find_vertical_tris([]), do: []
   def find_vertical_tris([[a1, b1, c1], [a2, b2, c2], [a3, b3, c3] | tail]) do
@@ -58,8 +35,10 @@ defmodule Three.Solver do
     |> split_and_map("  ", &to_int/1)
   end
 
-  def valid?([a,b,c]) when (a + b) > c, do: true
+  def valid?([a,b,c]) 
+    when (a + b) > c and
+         (a + c) > b and
+         (b + c) > a, 
+    do: true
   def valid?([_,_,_]), do: false
-  
-  
 end
