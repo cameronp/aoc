@@ -35,7 +35,6 @@ defmodule Four.Solver do
       %{t | name: name}
     end
 
-
     def _decrypt("", _), do: ""
     def _decrypt("-" <> tail, rot), do: " " <> _decrypt(tail, rot)
     def _decrypt(<<c :: utf8, tail::binary>>, rot) do
@@ -45,9 +44,12 @@ defmodule Four.Solver do
 
     def rot_x(c, 0), do: c
     def rot_x(c, n) when n > 25, do: rot_x(c, rem(n, 26))
-    def rot_x(c, n) when c == ?z, do: ?a |> rot_x(n-1)
-    def rot_x(c, n), do: (c + 1) |> rot_x(n - 1)
-
+    def rot_x(c, n) do
+      case c + n do
+        res when res <= ?z -> res
+        rotate -> rotate - ?z - 1 + ?a
+      end
+    end
 
     defp just_keys(pairs) do
       pairs 
