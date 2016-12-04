@@ -2,39 +2,31 @@ defmodule Four.Solver do
   import Utils.Parsing
 
   defmodule Token do
-    defstruct name: "", checksum: [], sector_id: 0, letters: %{},
-      crypted: ""
+    defstruct name: "", checksum: [], sector_id: 0, letters: %{}, crypted: ""
 
     def new do
-      letters = 
-        ?a..?z
-        |> Enum.map(fn c -> <<c::utf8>> end)
-        |> Enum.reduce(%{}, fn l, ls -> Map.put(ls, l, 0) end)
-      %Token{letters: letters}
+     %Token{letters: init_letter_map}
     end
 
     def valid?(%Token{} = t) do
-      expected_checksum = checksum(t.letters)
-      expected_checksum == t.checksum
+      t.checksum == compute_checksum(t)
     end
 
-    def checksum(%{} = letters) do
+    def compute_checksum(%Token{letters: letters}) do
       fifth_frequency = 
         letters
-        |> Enum.sort_by(fn {_k, v} -> v end)
-        |> Enum.reverse
-        |> Enum.take(5)
-        |> Enum.reverse
-        |> hd
-        |> elem(1)
+        |> nth_frequency(5)
 
       letters
-        |> Enum.filter(fn {_k, v} -> v >= fifth_frequency end)
-        |> Enum.sort( fn {k1, v1}, {k2, v2} when v1 == v2 -> k1 < k2
-                         {_, v1}, {_, v2} -> v1 >= v2
-                      end)
+        |> occuring_at_least(fifth_frequency)
+        |> Enum.sort(&letter_comparator/2)
         |> Enum.take(5)
-        |> Enum.map(fn {k,_v} -> k end)
+        |> just_keys
+    end
+
+    def occuring_at_least(letters, freq) do
+      letters
+      |> Enum.filter(fn {_k, v} -> v >= freq end)
     end
 
     def decrypt(t) do
@@ -52,9 +44,37 @@ defmodule Four.Solver do
     end
 
     def rot_x(c, 0), do: c
+    def rot_x(c, n) when n > 25, do: rot_x(c, rem(n, 26))
     def rot_x(c, n) when c == ?z, do: ?a |> rot_x(n-1)
     def rot_x(c, n), do: (c + 1) |> rot_x(n - 1)
 
+
+    defp just_keys(pairs) do
+      pairs 
+      |> Enum.map(fn {k,_v} -> k end)
+    end
+
+    # Produces a map of letters to zeros.. %{"a" => 0, "b" => 0...}
+    defp init_letter_map do
+      ?a..?z
+      |> Enum.map(fn c -> <<c::utf8>> end)
+      |> Enum.reduce(%{}, fn l, ls -> Map.put(ls, l, 0) end)
+    end
+
+    # compares two letter / frequency pairs.  Sorts primarily on frequency
+    # with alphabetical order of the letter as a tie-breaker
+    defp letter_comparator({k1, v1}, {k2, v2}) when v1 == v2, do: k1 < k2
+    defp letter_comparator({_, v1}, {_, v2}), do: v1 > v2
+
+    # Returns the count of characters in nth place sorted by frequency, highest
+    # to lowest. so if the map is %{"a" => 4, "b" => "2", "c" => 2, "d" => 0}
+    # then nth_frequency(map, 3), will return 2.
+    defp nth_frequency(%{} = letters, n) do
+      letters
+        |> Enum.sort(fn {_, a}, {_, b} -> a > b end)
+        |> Enum.at(n-1)
+        |> elem(1)
+    end
   end
 
   alias Token
