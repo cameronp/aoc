@@ -31,7 +31,7 @@ defmodule Two.Bathroom do
       %State{position: {2,0}, code: [], pad: pad2}
     end
     
-    def record_code(%State{code: code} = s), 
+    def record_code(%State{} = s), 
       do: %{s | code: [s.pad[s.position] | s.code]}
 
     def move(%State{} = s, direction) do

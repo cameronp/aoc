@@ -104,7 +104,7 @@ nil otherwise.  Must be called prior to calling `visit`
 
 This is used as the abort function in part two.
   """
-  def visited?(%State{location: l, visited: v}=s), do: v[l]
+  def visited?(%State{location: l, visited: v}), do: v[l]
 
   @doc """
 An abort function that never aborts.  Used for part one.
