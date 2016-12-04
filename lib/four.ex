@@ -10,7 +10,7 @@ defmodule Four do
 
   def day, do: 4
 
-  def title, do: ""
+  def title, do: "Security Through Obscurity"
 
   def module, do: Four.Solver
 

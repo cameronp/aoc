@@ -70,10 +70,8 @@ defmodule Four.Solver do
     |> parse
     |> Enum.filter(fn t -> Token.valid?(t) end)
     |> decode
-    |> Enum.sort_by(fn t -> t.name end)
-    |> Enum.map(fn t -> "#{t.name} - #{t.sector_id}" end)
-    |> Enum.join("\n")
-    |> IO.puts
+    |> Enum.find(fn t -> t.name =~ "northpole" end)
+    |> Map.get(:sector_id)
   end
   
   def decode(tokens) do
