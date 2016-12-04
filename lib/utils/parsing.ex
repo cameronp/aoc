@@ -17,7 +17,7 @@ Optimistically parse an integer
   def to_int(s) do
     case Integer.parse(s) do
       {i, ""} -> i
-      error -> IO.inspect(s)
+      _error -> IO.inspect(s)
     end
   end
 
@@ -36,5 +36,16 @@ the passed in function over them.
 takes the passed in string, downcases it, and turns it into an atom
   """
   def to_downcased_atom(s), do: s |> String.downcase |> String.to_atom
+
+  @doc """
+Take map of the form %{"foo" => 22...} and atomize the keys resulting in
+%{:foo => 22}.  Useful for turning the result of Regex.named_captures into an atom
+based map.
+  """
+  def atomize_keys(%{} = m) do
+    m
+    |> Enum.map(fn {k,v} -> {String.to_atom(k), v} end)
+    |> Enum.into(%{})
+  end
 
 end
