@@ -81,30 +81,36 @@ defmodule Four.Solver do
 
   alias Token
 
-  def part1 do
-    load
-    |> parse
-    |> solve
+  def part1, do: solve(&sum_ids/1)
+  def part2, do: solve(&find_storeroom/1)
+
+  def sum_ids(tokens) do
+    tokens 
+    |> Enum.reduce(0, fn t, sum -> sum + t.sector_id end)
   end
 
-  def part2 do
-    load
-    |> parse
-    |> Enum.filter(fn t -> Token.valid?(t) end)
-    |> decode
+  def find_storeroom(tokens) do
+    tokens    
     |> Enum.find(fn t -> t.name =~ "northpole" end)
     |> Map.get(:sector_id)
   end
-  
+
+  def validate(tokens) do
+    tokens
+    |> Enum.filter(&Token.valid?/1)
+  end
+
   def decode(tokens) do
     tokens
     |> Enum.map(&Token.decrypt/1)
   end
 
-  def solve(input) do
-    input 
-    |> Enum.filter(fn t -> Token.valid?(t) end)
-    |> Enum.reduce(0, fn t, sum -> sum + t.sector_id end)
+  def solve(solver) do
+    load
+    |> parse
+    |> validate
+    |> decode
+    |> solver.()
   end
 
   def load(file \\ "data/four/input.txt") do
@@ -118,41 +124,46 @@ defmodule Four.Solver do
   end
 
   def parse_token(s) do
-    token = _parse_token(s, Token.new)
-    name = 
+    Token.new
+    |> count_letters(s)
+    |> extract_checksum(s)
+    |> store_crypted(s)
+    |> extract_sector_id(s)
+  end
+
+  def store_crypted(token, s) do
+     name = 
       s
       |> String.split("[")
       |> hd
       |> String.replace(~r/[0-9]/, "")
-    %{token | crypted: name}
+   %{token | crypted: name}
   end
 
-  def _parse_token("", t), do: t
-  def _parse_token("-" <> tail, t), do: tail |> _parse_token(t)
-  def _parse_token(<<letter::utf8, tail::binary>>, 
-                   %Token{} = t)
+  def count_letters(t, <<num::utf8, _tail::binary>>) when num in ?0..?9, do: t
+  def count_letters(t, "-" <> tail), do: t |> count_letters(tail)
+  def count_letters(%Token{} = t,<<letter::utf8, tail::binary>>)
       when letter in ?a..?z do
     l = <<letter::utf8>>
     new_letters = Map.put(t.letters, l, t.letters[l] + 1)
     new_t = %{t | letters: new_letters}
-    _parse_token(tail, new_t) 
+    count_letters(new_t, tail) 
   end
 
-  def _parse_token(<<n::utf8, _tail::binary>> = s, t) when n in ?0..?9 do
-    {id, checksum_raw} = Integer.parse(s)
+  def extract_sector_id(%Token{} = t, s) do
+    [id_str] = Regex.run(~r/[0-9]+/, s)
+    %{t | sector_id: to_int(id_str)}
+  end
+
+  def extract_checksum(%Token{} = t, s) do
+    [_, split_s] = 
+      s
+      |> String.split("[")
+      
     checksum = 
-      checksum_raw 
-      |> parse_checksum
-
-    %{t | sector_id: id, checksum: checksum}
+      split_s
+      |> String.replace(~r/[\[\]]/, "", global: true)
+      |> String.split("", trim: true)
+    %{t | checksum: checksum}
   end
-
-  def parse_checksum(s) do
-    s
-    |> String.replace(~r/[\[\]]/, "", global: true)
-    |> String.split("", trim: true)
-  end
-
-
-
 end
