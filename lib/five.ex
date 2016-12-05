@@ -12,7 +12,7 @@ defmodule Five do
 
   def title, do: ""
 
-  def module, do: Five.Solver
+  def module, do: Five.Password
 
   def part1, do: module |> apply(:part1, [])
   def part2, do: module |> apply(:part2, [])
