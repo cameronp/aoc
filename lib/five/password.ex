@@ -26,6 +26,8 @@ defmodule Five.Password do
  def generate_hash(base, n), 
    do: "#{base}#{n}" |> md5
 
+ def generate_hashable(n, base), do: "#{base}#{n}"
+
  def md5(s), do: :crypto.hash(:md5, s) |> Base.encode16
 
  def sixth_char(s), do: s |> String.slice(5,1)
@@ -55,6 +57,30 @@ defmodule Five.Password do
    |> Stream.map(&pos_and_value/1)
    |> Enum.reduce_while(%{}, &pos_and_val_reducer/2)
    |> code_from_map 
+ end
+
+ alias Experimental.Flow
+
+
+ def part1_flow(input \\ @puzzle_input) do
+   Stream.iterate(0, &(&1 + 1))
+   |> Flow.from_enumerable
+   |> Flow.map(&generate_hashable(&1, input))
+   |> Flow.map(&md5/1)
+   |> Flow.filter(&interesting?/1)
+   |> Flow.map(&sixth_char/1)
+   |> Enum.take(8)
+   |> Enum.join("")
+ end
+ 
+ def part2_flow(input \\ @puzzle_input) do
+   Stream.iterate(0, &(&1 + 1))
+   |> Flow.from_enumerable
+   |> Flow.map(&generate_hashable(&1, input))
+   |> Flow.map(&md5/1)
+   |> Flow.filter_map(&very_interesting?/1, &pos_and_value/1)
+   |> Enum.reduce_while(%{}, &pos_and_val_reducer/2)
+   |> code_from_map
  end
 
  def pos_and_val_reducer(entry, %{} = positions) do
