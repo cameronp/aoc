@@ -2,33 +2,38 @@ defmodule Five.Password do
   @puzzle_input "reyedfim"
 
   alias Experimental.Flow
- 
-  defmodule State do
-    defstruct base: "", n: 0
-   
-    def new(base), do: %State{base: base}
-    def increment(s), do: %{s | n: s.n + 1}
+
+  def part1(input \\ @puzzle_input), 
+    do: solve(input, &interesting?/1, &construct_part1/1)
+
+  def part2(input \\ @puzzle_input), 
+    do: solve(input, &very_interesting?/1, &construct_part2/1)
+
+  def solve(input, hash_selector, code_constructor) do
+    flow_of_hashes(input)  
+    |> Flow.filter(hash_selector)
+    |> code_constructor.()
   end
 
-  def part1(input \\ @puzzle_input) do
-    Stream.iterate(0, &(&1 + 1))
-    |> Flow.from_enumerable
-    |> Flow.map(&generate_hashable(&1, input))
-    |> Flow.map(&md5/1)
-    |> Flow.filter(&interesting?/1)
+  def construct_part1(flow) do
+    flow
     |> Flow.map(&sixth_char/1)
     |> Enum.take(8)
     |> Enum.join("")
   end
- 
-  def part2(input \\ @puzzle_input) do
+
+  def construct_part2(flow) do
+    flow
+    |> Flow.map(&pos_and_value/1)
+    |> Enum.reduce_while(%{}, &pos_and_val_reducer/2)
+    |> code_from_map
+  end
+
+  def flow_of_hashes(input) do
     Stream.iterate(0, &(&1 + 1))
     |> Flow.from_enumerable
     |> Flow.map(&generate_hashable(&1, input))
     |> Flow.map(&md5/1)
-    |> Flow.filter_map(&very_interesting?/1, &pos_and_value/1)
-    |> Enum.reduce_while(%{}, &pos_and_val_reducer/2)
-    |> code_from_map
   end
 
   def generate_hashable(n, base), do: "#{base}#{n}"
