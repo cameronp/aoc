@@ -1,5 +1,5 @@
 defmodule Aoc do
-  @days [One, Two, Three, Four, Five, Six]
+  @days [One, Two, Three, Four, Five, Six, Seven]
 
   def run do
     @days
