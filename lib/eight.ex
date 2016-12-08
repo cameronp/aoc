@@ -12,7 +12,7 @@ defmodule Eight do
 
   def title, do: "Two-Factor Authentication" 
 
-  def module, do: Eight.TwoFactor
+  def module, do: Eight.Solver
 
   def part1, do: module |> apply(:part1, [])
   def part2, do: module |> apply(:part2, [])

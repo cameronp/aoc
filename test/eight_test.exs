@@ -54,9 +54,8 @@ defmodule EightTest do
   end
 
 
-  @tag skip: "nyi"
   test "part1" do
-    assert Seven.part1 == 115
+    assert Eight.part1 == 123
   end
 
   @tag skip: "nyi"
