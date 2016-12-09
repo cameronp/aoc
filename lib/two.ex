@@ -1,21 +1,4 @@
 defmodule Two do
-  def run do
-    IO.puts ""
-    IO.puts("Day #{day}: #{title}")
-    IO.puts(String.duplicate("-", 40))
-    IO.puts("Part 1 result: #{part1}")
-    IO.puts("Part 2 result: #{part2}")
-    IO.puts ""
-  end
-
-
-  def day, do: 2
-
-  def title, do: "Bathroom Security"
-
-  def module, do: Two.Bathroom
-
-  def part1, do: module |> apply(:part1, [])
-  def part2, do: module |> apply(:part2, [])
+  use Aoc.Scaffold, day: 2, title: "Bathroom Security", module: Two.Bathroom
 
 end
