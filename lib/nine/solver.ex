@@ -26,11 +26,11 @@ defmodule Nine.Solver do
     |> Enum.join("")
   end
 
-  def process(data), do: data |> Nine.Compression.decompress
+  def process(data), do: data |> Nine.Super.parse(:one)
 
-  def compute(data), do: data |> String.length
+  def compute(data), do: data |> Nine.Super.len 
 
-  def process2(data), do: data |> Nine.Super.parse
+  def process2(data), do: data |> Nine.Super.parse(:two)
 
   def compute2(elements), do: elements |> Nine.Super.len
 end

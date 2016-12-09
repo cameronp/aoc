@@ -3,18 +3,18 @@ defmodule Nine.Super do
 
   defmodule Node, do: defstruct repeats: 0, children: []
 
-  def parse(s), do: parse(s, [])
-  def parse("", res), do: res |> Enum.reverse
-  def parse(s, res) do
-    case parse_node(s) do
-      {node, rest} -> parse(rest, [node | res])
-      :error -> take_text(s, res)
+  def parse(s, version) when is_atom(version), do: parse(s, [], version)
+  def parse("", res, _version), do: res |> Enum.reverse
+  def parse(s, res, version) do
+    case parse_node(s, version) do
+      {node, rest} -> parse(rest, [node | res], version)
+      :error -> take_text(s, res, version)
     end
   end
   
-  def parse_node(s) do
+  def parse_node(s, version) do
     case parse_instruction(s) do
-      {instruction, rest} -> build_node(instruction, rest)
+      {instruction, rest} -> build_node(instruction, rest, version)
       _ -> :error
     end
   end
@@ -26,9 +26,13 @@ defmodule Nine.Super do
   end 
   def parse_instruction(_), do: :error
 
-  def build_node({length, repeats}, s) do
+  def build_node({length, repeats}, s, version) do
     {to_parse, rest} = s |> String.split_at(length)
-    children = parse(to_parse)
+    children = 
+      case version do
+        :two -> parse(to_parse, :two)
+        :one -> [to_parse]
+      end
     node = %Node{children: children, repeats: repeats}
     {node, rest}
   end
@@ -40,9 +44,9 @@ defmodule Nine.Super do
     do: parse_text(tail, result <> next)
 
 
-  def take_text(s, res) do
+  def take_text(s, res, version) do
     {text, rest} = parse_text(s)
-    parse(rest, [text | res])
+    parse(rest, [text | res], version)
   end
 
   def len(list) when is_list(list) do
@@ -64,5 +68,5 @@ defmodule Nine.Super do
     |> String.duplicate(r)
   end
 
-  def decompress(s), do: s |> parse |> assemble
+  def decompress(s, version \\ :two), do: s |> parse(version) |> assemble
 end
