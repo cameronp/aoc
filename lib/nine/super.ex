@@ -1,68 +1,47 @@
 defmodule Nine.Super do
-  defmodule Node do
-    defstruct repeats: 0, children: []
-    alias Nine.Super.{Instruction, Text}
-    def parse(s) do
-      case Instruction.parse(s) do
-        {instruction, rest} -> build_node(instruction, rest)
-        _ -> :error
-      end
-    end
+  import Utils.Parsing
 
-    def build_node({length, repeats}, s) do
-      {to_parse, rest} = 
-        s
-        |> String.split_at(length)
-      children = 
-        Nine.Super.parse(to_parse)
-      node = %Node{children: children, repeats: repeats}
-      {node, rest}
-    end
-  end
-
-  defmodule Instruction do
-    alias Nine.Super.Value
-    def parse("(" <> tail) do
-      with {length, "x" <> rest} <- Value.parse(tail),
-           {repeats, ")" <> rest1} <- Value.parse(rest) do
-             {{length, repeats}, rest1}
-           else
-             :error -> :error
-             _ -> :error
-           end
-    end
-  
-    def parse(_), do: :error
-  end
-
-  defmodule Text do
-    def parse(s), do: parse(s, "")
-    def parse("", result), do: {result, ""}
-    def parse("(" <> tail, result), do: {result, "("<>tail}
-    def parse(<<next::binary-size(1), tail::binary>>, result), 
-      do: parse(tail, result <> next)
-  end
-
-  defmodule Value do
-    def parse(s) do
-      s
-      |> Integer.parse
-    end
-  end
-  
-  alias Nine.Super.Node
+  defmodule Node, do: defstruct repeats: 0, children: []
 
   def parse(s), do: parse(s, [])
   def parse("", res), do: res |> Enum.reverse
   def parse(s, res) do
-    case Node.parse(s) do
+    case parse_node(s) do
       {node, rest} -> parse(rest, [node | res])
-      :error -> try_text(s, res)
+      :error -> take_text(s, res)
+    end
+  end
+  
+  def parse_node(s) do
+    case parse_instruction(s) do
+      {instruction, rest} -> build_node(instruction, rest)
+      _ -> :error
     end
   end
 
-  def try_text(s, res) do
-    {text, rest} = Text.parse(s)
+  def parse_instruction("(" <> tail) do
+    r = ~r/(\d+?)x(\d+?)\)(.+)/
+    [_, len_s, repeat_s,  rest] = Regex.run(r, tail) 
+    {{to_int(len_s), to_int(repeat_s)}, rest}
+  end 
+  def parse_instruction(_), do: :error
+
+  def build_node({length, repeats}, s) do
+    {to_parse, rest} = s |> String.split_at(length)
+    children = parse(to_parse)
+    node = %Node{children: children, repeats: repeats}
+    {node, rest}
+  end
+
+  def parse_text(s), do: parse_text(s, "")
+  def parse_text("", result), do: {result, ""}
+  def parse_text("(" <> tail, result), do: {result, "("<>tail}
+  def parse_text(<<next::binary-size(1), tail::binary>>, result), 
+    do: parse_text(tail, result <> next)
+
+
+  def take_text(s, res) do
+    {text, rest} = parse_text(s)
     parse(rest, [text | res])
   end
 
