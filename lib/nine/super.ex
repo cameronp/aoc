@@ -72,4 +72,18 @@ defmodule Nine.Super do
   end
   def len(s) when is_binary(s), do: s |> String.length
   def len(%Node{repeats: r, children: cs}), do: r * len(cs)
+
+  def assemble(list) when is_list(list) do
+    list
+    |> Enum.map(&assemble/1)
+    |> Enum.join("")
+  end
+  def assemble(s) when is_binary(s), do: s
+  def assemble(%Node{repeats: r, children: cs}) do
+    cs
+    |> assemble
+    |> String.duplicate(r)
+  end
+
+  def decompress(s), do: s |> parse |> assemble
 end
