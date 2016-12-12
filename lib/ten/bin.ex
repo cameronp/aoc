@@ -33,7 +33,7 @@ defmodule Ten.Bin do
   
   def init(%{id: id, dir: dir})  do
     state = %State{id: id, dir: dir}
-    IO.puts "Starting: #{format(state)}"
+    #IO.puts "Starting: #{format(state)}"
     register(dir, id, self)
     {:ok, state}
   end
@@ -41,7 +41,7 @@ defmodule Ten.Bin do
   def handle_call({:delivery, chip_id}, _from, state) do
     new_state = %{state | chips: [chip_id | state.chips]}
     #IO.puts "Receiving #{chip_id}: #{format(new_state)}"
-    IO.puts("Bin ##{state.id}: chips: #{format(chips: new_state.chips)}")
+    #IO.puts("Bin ##{state.id}: chips: #{format(chips: new_state.chips)}")
     {:reply, :ok, new_state}
   end
 

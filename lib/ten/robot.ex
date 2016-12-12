@@ -60,13 +60,13 @@ defmodule Ten.Robot do
   
   def init(%{id: id, dir: dir})  do
     state = %State{id: id, dir: dir}
-    IO.puts "Starting: #{format(state)}"
+    #IO.puts "Starting: #{format(state)}"
     register(dir, id, self)
     {:ok, state}
   end
 
-  def handle_call(:tick, _from, %State{chips: [a,b | t] = chips} = s) do
-    new_state = case process_chips(s, chips |> Enum.sort) do
+  def handle_call(:tick, _from, %State{chips: [_a,_b | _t] = chips} = s) do
+    case process_chips(s, chips |> Enum.sort) do
       :halt -> {:reply, :halt, s} 
       new_state -> {:reply, :ok, new_state}
     end
@@ -77,6 +77,18 @@ defmodule Ten.Robot do
     {:reply, :ok, s}
   end
 
+  def handle_call({:delivery, chip_id}, _from, state) do
+    new_state = %{state | chips: [chip_id | state.chips]}
+    #IO.puts "Receiving #{chip_id}: #{format(new_state)}"
+    {:reply, :ok, new_state}
+  end
+
+  def handle_call({:set_filter, low, high}, _from, state) do
+    new_state = %{state | low: low, high: high}
+    IO.puts "Setting filter: #{format(new_state)}"
+    {:reply, :ok, new_state}
+  end
+ 
   #def process_chips(s, [17,61]) do
     ##IO.puts("RESULT: #{s.id} is filtering 17 and 61")
     #:halt
@@ -91,18 +103,7 @@ defmodule Ten.Robot do
     %{s | chips: s.chips -- [low,high]}
   end
 
-  def handle_call({:delivery, chip_id}, _from, state) do
-    new_state = %{state | chips: [chip_id | state.chips]}
-    #IO.puts "Receiving #{chip_id}: #{format(new_state)}"
-    {:reply, :ok, new_state}
-  end
-
-  def handle_call({:set_filter, low, high}, _from, state) do
-    new_state = %{state | low: low, high: high}
-    IO.puts "Setting filter: #{format(new_state)}"
-    {:reply, :ok, new_state}
-  end
-  
+ 
   # Helpers
   
   def format(%State{} = state) do
@@ -126,7 +127,7 @@ defmodule Ten.Robot do
     Agent.update(dir, fn s -> Map.put(s, {:robot, id}, pid) end)
   end
 
-  def target(dir, {:bot, id}), do: Robot.lookup(dir, id)
+  def target(dir, {:bot, id}), do: lookup(dir, id)
   def target(dir, {:output, id}), do: Bin.lookup(dir, id)
 
 end
