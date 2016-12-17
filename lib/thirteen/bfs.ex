@@ -1,62 +1,100 @@
 defmodule Thirteen.BFS do
   defstruct context: nil, avail_fn: nil, move_fn: nil, visited: %{}, 
-            queue: nil, max_depth: nil
+            queue: nil, max_depth: nil, visited_fn: nil, visit_fn: nil,
+            errors: []
+
   alias Thirteen.BFS
 
-  def new(context, avail_fn, move_fn) do
-    %BFS{
-      context: context,
-      avail_fn: avail_fn,
-      move_fn: move_fn,
-      queue: create_queue
-    }
+  def init(key_list) do
+    key_list
+    |> Enum.reduce(%BFS{}, &handle_key/2)
+    |> required([:context, :avail_fn, :move_fn])
+    |> defaults([visited_fn: nil, visit_fn: nil, max_depth: nil])
+    |> setup_queue
   end
 
-  def new(context, avail_fn, move_fn, max_depth) do
-    bfs = new(context, avail_fn, move_fn)
-    %{bfs | max_depth: max_depth}
+  def setup_queue(bfs), do: %{bfs | queue: create_queue}
+
+  def required(bfs, keys) do
+    errors = 
+      keys
+      |> Enum.filter(fn k -> Map.get(bfs, k) == nil end)
+      |> Enum.map(fn k -> {:missing_required, k} end)
+    %{bfs | errors: bfs.errors ++ errors}
   end
 
-  def path(%BFS{} = bfs, from, to), do: path(bfs, from, to, [], 0)
+  def defaults(bfs, defaults) do
+    defaults
+    |> Enum.reduce(bfs, fn {k, d}, bfs -> Map.put(bfs, k, d) end)
+  end
 
-  def path(%BFS{}, from, from, path, _depth), do: path
+  def handle_key({:context, c}, bfs), do: %{bfs | context: c}
+  def handle_key({:avail_fn, f}, bfs), do: %{bfs | avail_fn: f}
+  def handle_key({:move_fn, f}, bfs), do: %{bfs | move_fn: f}
+  def handle_key({:max_depth, d}, bfs), do: %{ bfs | max_depth: d}
+  def handle_key({:visit_fn, f}, bfs), do: %{bfs | visit_fn: f}
+  def handle_key({:visited_fn, f}, bfs), do: %{bfs | visited_fn: f}
 
-  def path(%BFS{} = bfs, from, to, path, depth) do
-    moves = 
-      bfs.avail_fn.(from, bfs.context)
-      |> Enum.map(fn m -> {m, bfs.move_fn.(from, m, bfs.context)} end)
-      |> Enum.filter(fn {_, state} -> bfs.visited[state] == nil end)
-      |> Enum.map(&add_path(&1, path))
-      |> Enum.map(&add_depth(&1, depth + 1))
-      |> remove_too_deep(bfs)
-    
-    case queue_and_next(bfs.queue, moves, bfs) do
-      {{next_move, next_state, path, next_depth}, new_queue} ->
+  def new_path(bfs, from, to), do: new_path(bfs, from, to, [], 0)
+
+  def new_path(_bfs, from, from, path, _depth), do: path
+
+  def new_path(bfs, from, to, path, depth) do
+    # get all available moves
+    moves = bfs.avail_fn.(bfs.context, from)
+
+    # collect the resulting states from those moves
+    moves_and_states = 
+      moves
+      |> Enum.map(fn m -> {m, bfs.move_fn.(bfs.context, m)} end)
+
+    # filter out any already visited states
+    unvisited_moves_and_states =
+      moves_and_states
+      |> Enum.filter(fn {_m, s} -> !visited?(bfs, s) end)
+
+    # if we're not already at the max_depth, then enqueue the moves, paths, and depths that remain
+    to_queue =
+      case bfs.max_depth do
+        nil ->
+          unvisited_moves_and_states
+          |> queue_entries(path, depth+1)
+        d when d > depth ->
+          unvisited_moves_and_states
+          |> queue_entries(path, depth+1)
+        _ -> [] 
+      end
+
+    enqueued = enqueue(bfs.queue, to_queue)
+
+    # take the first unvisited queue entry, if the queue is empty, we're done
+    case first_unvisited(enqueued, bfs) do
+      {{next, new_path, new_depth}, new_queue} ->
         bfs
-        |> visit(from)
+        |> visit(from)  
         |> set_queue(new_queue)
-        |> path(next_state, to, path, next_depth)
-      :empty -> bfs.visited
+        |> new_path(next, to, new_path, new_depth)
+      :empty -> bfs
     end
   end
 
-  def queue_and_next(queue, moves, bfs)  do
-    queue
-    |> enqueue(moves)
-    |> first_unvisited(bfs)
+  def queue_entries(moves_and_states, path, depth) do
+    moves_and_states
+    |> Enum.map(fn {m,s} -> {s, [m | path], depth} end)
   end
 
-  def remove_too_deep(moves, %BFS{max_depth: nil}), do: moves
-  def remove_too_deep(moves, %BFS{max_depth: max_depth}) do
-    moves
-    |> Enum.filter(fn {_,_,_,depth} -> depth <= max_depth end)
-  end
 
-  def add_path({m, s}, path), do: {m, s, [m | path]}
-  def add_depth({m, s, p}, depth), do: {m, s, p, depth}
-
-  def visit(%BFS{visited: visited} = bfs, state),
+  def visit(%BFS{visited: visited, visit_fn: nil} = bfs, state),
     do: %{bfs | visited: Map.put(visited, state, true)}
+
+  def visit(%BFS{visit_fn: vfn, context: c} = bfs, state),
+    do: %{bfs | context: vfn.(c, state)}
+
+  def visited?(%BFS{visited: visited, visited_fn: nil}, state),
+    do: visited[state] != nil
+
+  def visited?(%BFS{visited_fn: vfn, context: c}, state), 
+    do: vfn.(c, state)
 
   def set_queue(%BFS{} = bfs, new_queue), 
     do: %{bfs | queue: new_queue}
@@ -64,7 +102,7 @@ defmodule Thirteen.BFS do
   def first_unvisited(queue, %BFS{max_depth: nil} = bfs) do
     case queue |> dequeue do
       :empty -> :empty
-      {next, new_queue} -> skip_if_unvisited(next, new_queue, bfs)
+      {next, new_queue} -> skip_if_visited(next, new_queue, bfs)
     end
   end
 
@@ -76,13 +114,12 @@ defmodule Thirteen.BFS do
     end
   end
   
-  def skip_if_unvisited(next, queue, bfs) do
-    case bfs.visited[next] do
+  def skip_if_visited(next, queue, bfs) do
+    case visited?(bfs, next) do
       true -> first_unvisited(queue, bfs)
-      nil -> {next, queue}
+      false -> {next, queue}
     end
   end
-
 
 
   def create_queue, do: :queue.new

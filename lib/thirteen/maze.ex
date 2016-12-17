@@ -2,20 +2,18 @@ defmodule Thirteen.Maze do
   alias Thirteen.BFS
 
   def test do
-    10
-    |> BFS.new(&lazy_avail/2, &move_fn/3)
-    |> BFS.path({1,1},{7,4})
+    BFS.init(context: 10, avail_fn: &lazy_avail/2, move_fn: &move_fn/2)
+    |> BFS.new_path({1,1},{7,4})
   end
 
   def solve do
-    1362
-    |> BFS.new(&lazy_avail/2, &move_fn/3)
-    |> BFS.path({1,1},{31,39})
+    BFS.init(context: 1362, avail_fn: &lazy_avail/2, move_fn: &move_fn/2)
+    |> BFS.new_path({1,1},{31,39})
   end
 
   def solve2 do
     1362
-    |> BFS.new(&lazy_avail/2, &move_fn/3, 51)
+    |> BFS.new(&lazy_avail/2, &move_fn/2, 51)
     |> BFS.path({1,1},{31,39})
     |> Map.keys
     |> Enum.filter(&on_the_board/1)
@@ -27,22 +25,21 @@ defmodule Thirteen.Maze do
     |> Enum.into(%{})
   end
 
-  def lazy_avail(point, secret) do
+  def lazy_avail(secret, point) do
     point
     |> all_moves
-    |> Enum.filter(fn {m, dest} -> dest |> open_space?(secret) end)
+    |> Enum.filter(fn {_m, dest} -> dest |> open_space?(secret) end)
     |> just_move_part
+    |> with_from(point)
   end
 
-  def avail_fn(point, maze) do
-    point
-    |> all_moves
-    |> legal_moves(maze)
-    |> just_move_part
+  def with_from(moves, from) do
+    moves
+    |> Enum.map(fn m -> {from, m} end)
   end
 
-  def move_fn(point, move, _context) do
-    point
+  def move_fn(_secret, {from, move}) do
+    from
     |> move(move)
   end
 
