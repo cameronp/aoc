@@ -1,12 +1,14 @@
-defmodule OneTest do
+defmodule TwelveTest do
   use ExUnit.Case
-  doctest One
+  doctest Twelve
 
+  @tag skip: "nyi"
   test "part1" do
-    assert One.part1 == 301 
+    assert Twelve.part1 == 301 
   end
 
+  @tag skip: "nyi"
   test "part2" do
-    assert One.part2 == 130 
+    assert Twelve.part2 == 130 
   end
 end

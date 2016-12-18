@@ -36,7 +36,7 @@ defmodule Eleven.Madness do
   def find_path(from, to, states_map, depth_agent), 
     do: find_path({from, []}, to, 0, :queue.new, %{}, states_map, depth_agent)
 
-  def find_path({from, moves}, from, _counter, _queue, _visited, _states_map, depth_agent), do: moves 
+  def find_path({from, moves}, from, _counter, _queue, _visited, _states_map, _depth_agent), do: moves 
 
   def find_path({_, moves} = current, to, counter, queue, visited, states_map, depth_agent)
     when rem(counter,10000) == 0 do

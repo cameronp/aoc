@@ -326,7 +326,7 @@ defmodule Eleven.Bits do
   def _compute_if_room_is_valid({_, [0,0,0,0,0]}), do: true
   def _compute_if_room_is_valid({[1 | gen_t], [1 | chip_t]}),
     do: _compute_if_room_is_valid({gen_t, chip_t})
-  def _compute_if_room_is_valid({[0 | gen_t], [1 | chip_t]}),
+  def _compute_if_room_is_valid({[0 | _gen_t], [1 | _chip_t]}),
     do: false
   def _compute_if_room_is_valid({[1 | gen_t], [0 | chip_t]}),
     do: _compute_if_room_is_valid({gen_t, chip_t})

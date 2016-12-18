@@ -107,7 +107,6 @@ So the initial state is:
   
 
   def move(s, {el, dest} = m) do
-    dest_floor = s[dest]
     %{s |  s[:e] => s[s[:e]] -- el, 
            dest => s[dest] ++ el, 
            e: dest, 
