@@ -12,11 +12,11 @@ defmodule Thirteen.Maze do
   end
 
   def solve2 do
-    1362
-    |> BFS.new(&lazy_avail/2, &move_fn/2, 51)
-    |> BFS.path({1,1},{31,39})
-    |> Map.keys
-    |> Enum.filter(&on_the_board/1)
+    result = 
+      BFS.init(context: 1362, avail_fn: &lazy_avail/2, move_fn: &move_fn/2, max_depth: 51)
+      |> BFS.new_path({1,1},{31,39})
+    #display(1362, result.visited)
+    result.visited |> Enum.filter(fn {_, v} -> v end) |> Enum.count
   end
 
   def create(max_x, max_y, secret) do
@@ -38,7 +38,7 @@ defmodule Thirteen.Maze do
     |> Enum.map(fn m -> {from, m} end)
   end
 
-  def move_fn(_secret, {from, move}) do
+  def move_fn(_secret, {{x,y} = from, move}) when x >= 0 and y >= 0 do
     from
     |> move(move)
   end
@@ -61,11 +61,21 @@ defmodule Thirteen.Maze do
 
   def all_moves({x,y}) do
     [l: {x-1,y}, u: {x, y-1}, r: {x+1, y}, d: {x, y+1}]
-    |> Enum.filter(&on_the_board/1)
+    |> Enum.filter(fn {_, dest} -> on_the_board(dest) end)
   end
 
   def on_the_board({x,y}) when x >= 0 and y >= 0, do: true
   def on_the_board(_), do: false
+ 
+  def display(secret, visited) do
+    {max_x, max_y} = 
+      visited
+      |> dimensions
+    (for y <- 0..(max_y + 1), do: row(secret, y, max_x, visited))
+    |> Enum.join("\n")
+    |> IO.puts
+  end
+
 
   def display(maze) do
     {max_x, max_y} = 
@@ -81,6 +91,25 @@ defmodule Thirteen.Maze do
     |> Enum.map(fn true -> "."
                    false -> "#" end)
     |> Enum.join("")
+  end
+
+  def row(secret, y, max_x, visited) do
+    (for x <- 0..max_x, do: {x,y})
+    |> Enum.map(fn point -> symbol_for(point, secret, visited) end)
+    |> append_one_more(y, max_x + 1, secret, visited)
+    |> Enum.join("")
+  end
+
+  def append_one_more(list, y, x, secret, visited) do
+    list ++ [symbol_for({x,y}, secret, visited)] 
+  end
+
+  def symbol_for(point, secret, visited) do
+     cond do
+       visited[point] -> "o"
+       open_space?(point, secret) -> "."
+       :else -> "#"
+     end
   end
 
   def dimensions(maze) do

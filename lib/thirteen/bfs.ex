@@ -25,7 +25,14 @@ defmodule Thirteen.BFS do
 
   def defaults(bfs, defaults) do
     defaults
-    |> Enum.reduce(bfs, fn {k, d}, bfs -> Map.put(bfs, k, d) end)
+    |> Enum.reduce(bfs, fn {k, d}, acc -> apply_default(acc, k, d) end) 
+  end
+
+  def apply_default(bfs, k, d) do
+    case Map.get(bfs, k) do
+      nil -> Map.put(bfs, k, d)
+      _ -> bfs
+    end
   end
 
   def handle_key({:context, c}, bfs), do: %{bfs | context: c}
@@ -55,15 +62,9 @@ defmodule Thirteen.BFS do
 
     # if we're not already at the max_depth, then enqueue the moves, paths, and depths that remain
     to_queue =
-      case bfs.max_depth do
-        nil ->
-          unvisited_moves_and_states
-          |> queue_entries(path, depth+1)
-        d when d > depth ->
-          unvisited_moves_and_states
-          |> queue_entries(path, depth+1)
-        _ -> [] 
-      end
+      unvisited_moves_and_states
+      |> filter_moves_to_queue(depth + 1, bfs.max_depth)
+      |> queue_entries(path, depth + 1)
 
     enqueued = enqueue(bfs.queue, to_queue)
 
@@ -74,9 +75,16 @@ defmodule Thirteen.BFS do
         |> visit(from)  
         |> set_queue(new_queue)
         |> new_path(next, to, new_path, new_depth)
-      :empty -> bfs
+      :empty -> bfs |> visit(from)
     end
   end
+  
+  
+  def filter_moves_to_queue(moves, _depth, nil), do: moves
+  def filter_moves_to_queue(moves, depth, max_depth) when depth < max_depth, do: moves
+  def filter_moves_to_queue(_moves, _, _), do: []
+  
+
 
   def queue_entries(moves_and_states, path, depth) do
     moves_and_states
@@ -99,21 +107,13 @@ defmodule Thirteen.BFS do
   def set_queue(%BFS{} = bfs, new_queue), 
     do: %{bfs | queue: new_queue}
 
-  def first_unvisited(queue, %BFS{max_depth: nil} = bfs) do
+  def first_unvisited(queue, bfs) do
     case queue |> dequeue do
       :empty -> :empty
       {next, new_queue} -> skip_if_visited(next, new_queue, bfs)
     end
   end
 
-  def first_unvisited(queue, %BFS{max_depth: max_depth} = bfs) do
-    case first_unvisited(queue, %{bfs | max_depth: nil})  do
-      {{_,_,_,depth} = move, new_q} when depth < max_depth -> {move, new_q}
-      {_, new_q} -> first_unvisited(new_q, bfs)
-      :empty -> :empty
-    end
-  end
-  
   def skip_if_visited(next, queue, bfs) do
     case visited?(bfs, next) do
       true -> first_unvisited(queue, bfs)
