@@ -5,9 +5,9 @@ defmodule Sixteen do
 
   def solve(initial, size) do
     initial
-    |> message("filling")
+    #|> message("filling")
     |> fill(size)
-    |> message("generating cs")
+    #|> message("generating cs")
     |> checksum
   end
 
@@ -35,7 +35,7 @@ defmodule Sixteen do
   def generate(cur, len, target_size) when len < target_size do
     next = cur |> expand
     next_len = (2 * len) + 1 
-    IO.puts("generating, length: #{next_len}")
+    #IO.puts("generating, length: #{next_len}")
     generate(next, next_len, target_size)
   end
 
