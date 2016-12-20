@@ -1,0 +1,9 @@
+0-4   # starting at 0 (cur == from, cur < to)
+4-7   # overlapping with previous :to (cur > from, cur < to)
+8-10  # overlapping with previous :current (cur == from cur < to)
+12-15 # leaving 1 available at 11 (cur < from, cur < to)
+14-20 # overlapping within (cur > from cur < to)
+25-35 # leaving 21,22,23,24 (cur < from cur < to)
+30-32 # contained completely (cur > from, cur > to)
+31-61 # leaving 62,63
+
