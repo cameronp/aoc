@@ -1,14 +1,14 @@
 defmodule Thirteen.BFS do
   defstruct context: nil, avail_fn: nil, move_fn: nil, visited: %{}, 
             queue: nil, max_depth: nil, visited_fn: nil, visit_fn: nil,
-            errors: []
+            errors: [], equal_fn: nil
 
   alias Thirteen.BFS
 
   def init(key_list) do
     key_list
     |> Enum.reduce(%BFS{}, &handle_key/2)
-    |> required([:context, :avail_fn, :move_fn])
+    |> required([:context, :avail_fn, :move_fn, :equal_fn])
     |> defaults([visited_fn: nil, visit_fn: nil, max_depth: nil])
     |> setup_queue
   end
@@ -41,10 +41,16 @@ defmodule Thirteen.BFS do
   def handle_key({:max_depth, d}, bfs), do: %{ bfs | max_depth: d}
   def handle_key({:visit_fn, f}, bfs), do: %{bfs | visit_fn: f}
   def handle_key({:visited_fn, f}, bfs), do: %{bfs | visited_fn: f}
+  def handle_key({:equal_fn, f}, bfs), do: %{bfs | equal_fn: f}
 
-  def new_path(bfs, from, to), do: new_path(bfs, from, to, [], 0)
+  def path(bfs, from, to, path, depth) do
+    case bfs.equal_fn.(from, to) do
+      true -> path
+      false -> new_path(bfs, from, to, path, depth)
+    end
+  end
 
-  def new_path(_bfs, from, from, path, _depth), do: path
+  def new_path(bfs, from, to), do: path(bfs, from, to, [], 0)
 
   def new_path(bfs, from, to, path, depth) do
     # get all available moves
@@ -74,7 +80,7 @@ defmodule Thirteen.BFS do
         bfs
         |> visit(from)  
         |> set_queue(new_queue)
-        |> new_path(next, to, new_path, new_depth)
+        |> path(next, to, new_path, new_depth)
       :empty -> bfs |> visit(from)
     end
   end
