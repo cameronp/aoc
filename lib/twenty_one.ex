@@ -15,7 +15,6 @@ defmodule TwentyOne do
     combos
     |> Enum.filter(fn att -> String.length(att) == 8 end)
     |> Enum.find(fn attempt -> do_process(cmds, attempt) == target end)
-    #|> Enum.find( fn att -> String.length(att) != 8 end)
   end
 
   def test(file \\ "data/twenty_one/test.txt") do
